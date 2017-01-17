@@ -2,12 +2,16 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import R from 'ramda';
+import { IO } from 'ramda-fantasy';
 
 const trace = x => {
   console.log(x);
 
   return x;
 };
+
+const exampleW = 40;
+const exampleH = 40;
 
 const setCoords = R.compose(
   R.last,
@@ -22,53 +26,80 @@ const setCoords = R.compose(
 const rogueMap = setCoords(R.times(
   () => R.times(
     () => ({ symbol: ' ', color: 'red' })
-  , 32)
-, 32));
+  , exampleW)
+, exampleH));
 
 const brushes = [' ', '@', '*'];
 
-let state = {
-  brush: '@',
-  fcolor: 'green',
-  bgcolor: 'red'
-};
-
 const fontSize = 5;
 
-const fullOffset = (offsetName, elm) => {
-  let offset = elm[offsetName];
-  while (elm.offsetParent != null){
-      elm = elm.offsetParent;
-      offset = offset + elm[offsetName];
-  }
-  return offset;
-};
+const offsetAncestry = element =>
+  element.offsetParent ?
+    R.concat([element], offsetAncestry(element.offsetParent)) :
+    [element];
 
-const mouseDownHandler = downEvent => {
+const offsetTop = elm => elm.offsetTop;
+const offsetLeft = elm => elm.offsetLeft;
 
-  const editor = downEvent.currentTarget;
+const cumulativeOffset = propFn => R.compose(
+  R.sum,
+  R.map(propFn),
+  offsetAncestry
+);
 
-  const mouseMoveHandler = moveEvent => {
-    console.log(moveEvent);
-    console.log(fullOffset('left', editor));
-    debugger;
-  };
-
-
-  const mouseUpHandler = upEvent => {
-    console.log(upEvent);
-    window.removeEventListener('mousemove', mouseMoveHandler);
-  };
-
-  window.addEventListener('mouseup', mouseUpHandler);
-  window.addEventListener('mousemove', mouseMoveHandler);
-};
+const editCell = (x, y, fn) =>
+  R.adjust(
+    R.adjust(
+        fn,
+      x),
+    y);
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      rogueMap: rogueMap,
+      brush: '@',
+      fcolor: 'green',
+      bgcolor: 'red'
+    }
+  }
+
+  mouseDownHandler = downEvent => {
+
+    const editor = downEvent.currentTarget;
+
+    const mouseMoveHandler = moveEvent => {
+      const l = cumulativeOffset(offsetLeft)(editor);
+      const t = cumulativeOffset(offsetTop)(editor);
+      const w = editor.offsetWidth;
+      const h = editor.offsetHeight;
+      const x = moveEvent.clientX;
+      const y = moveEvent.clientY;
+
+      const xPos = Math.floor((x - l) / w * exampleW);
+      const yPos = Math.floor((y - t) / h * exampleH);
+      this.setState({
+        rogueMap: editCell(xPos, yPos, R.assoc('symbol', this.state.brush))(this.state.rogueMap)
+      });
+    };
+
+    const mouseUpHandler = upEvent => {
+      window.removeEventListener('mousemove', mouseMoveHandler);
+    };
+
+    window.addEventListener('mouseup', mouseUpHandler);
+    window.addEventListener('mousemove', mouseMoveHandler);
+  };
+
   render () {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <svg onMouseDown={mouseDownHandler} viewBox="0 0 32 32" width="40em" height="40em" style={{ overflow: 'visible' }}>
+        <div
+        className="canvas"
+        style={{ display: 'inline-block' }}
+        onMouseDown={this.mouseDownHandler}>
+          <svg viewBox={`0 0 ${exampleW} ${exampleH}`} width="40em" height="40em" style={{ overflow: 'visible' }}>
             {
               R.compose(
                 R.map(cell =>
@@ -77,11 +108,11 @@ class App extends Component {
                     <text style={{ fontSize: `${fontSize}%`, fill: cell.color, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
                   </g>
                 ),
-                trace,
                 R.unnest
-              )(rogueMap)
+              )(this.state.rogueMap)
             }
           </svg>
+        </div>
       </div>
     );
   }
