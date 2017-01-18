@@ -10,8 +10,8 @@ const trace = x => {
   return x;
 };
 
-const exampleW = 40;
-const exampleH = 40;
+const exampleW = 32;
+const exampleH = 32;
 
 const setCoords = R.compose(
   R.last,
@@ -23,13 +23,13 @@ const setCoords = R.compose(
     ], 0, rowVal)[1]
   ], 0));
 
+const brushes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789▩≋◸≉"@ ./+-#&'.split('');
+
 const rogueMap = setCoords(R.times(
   () => R.times(
-    () => ({ symbol: ' ', color: 'red' })
+    () => ({ symbol: brushes[Math.round(Math.random() * 5)], fcolor: 'red', bgcolor: 'black' })
   , exampleW)
 , exampleH));
-
-const brushes = [' ', '@', '*'];
 
 const fontSize = 5;
 
@@ -53,6 +53,16 @@ const editCell = (x, y, fn) =>
         fn,
       x),
     y);
+
+const sameColorsAndSymbol = R.curry((a, b) =>
+  a.symbol === b.symbol && a.fcolor === b.fcolor && a.bgcolor === b.bgcolor
+);
+
+const swatches = R.reduce((acc, val) =>
+  R.find(sameColorsAndSymbol(val), acc) ?  acc : R.append(val, acc)
+  , []);
+
+console.log(swatches(R.unnest(rogueMap)));
 
 class App extends Component {
   constructor(props) {
@@ -94,7 +104,18 @@ class App extends Component {
 
   render () {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div className="ui">
+        <ul className="brushes-panel">
+          {
+            brushes.map(brush =>
+              <li className="brushes-panel__entry">
+                <button className="brush-btn">
+                  {brush}
+                </button>
+              </li>
+            )
+          }
+        </ul>
         <div
         className="canvas"
         style={{ display: 'inline-block' }}
@@ -104,8 +125,8 @@ class App extends Component {
               R.compose(
                 R.map(cell =>
                   <g>
-                    <rect x={cell.x} y={cell.y} width="1" height="1" style={{ stroke: 'grey', strokeWidth: 0.01 }}/>
-                    <text style={{ fontSize: `${fontSize}%`, fill: cell.color, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
+                    <rect x={cell.x} y={cell.y} width="1" height="1" style={{ fill: cell.bgcolor, stroke: 'grey', strokeWidth: 0.01 }}/>
+                    <text style={{ fontSize: `${fontSize}%`, fill: cell.fcolor, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
                   </g>
                 ),
                 R.unnest
@@ -113,6 +134,17 @@ class App extends Component {
             }
           </svg>
         </div>
+        <ul className="swatch-panel">
+          {
+            swatches(R.unnest(this.state.rogueMap)).map(brush =>
+              <li className="brushes-panel__entry">
+                <button className="brush-btn">
+                  {brush.symbol}
+                </button>
+              </li>
+            )
+          }
+        </ul>
       </div>
     );
   }
