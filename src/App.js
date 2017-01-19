@@ -4,18 +4,21 @@ import './App.css';
 import R from 'ramda';
 import { IO } from 'ramda-fantasy';
 
+import Canvas from './components/canvas';
+import SwatchesPanel from './components/swatches-panel';
+import BrushesPanel from './components/brushes-panel';
+import ColorsPanel from './components/colors-panel';
+
 const trace = x => {
   console.log(x);
 
   return x;
 };
 
-const exampleW = 32;
-const exampleH = 32;
-
 const brushes = '▩≋◸≉"@ ./+-#&ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
 
-const fontSize = 5;
+const exampleW = 32;
+const exampleH = 32;
 
 const setCoords = R.compose(
   R.last,
@@ -67,7 +70,7 @@ class App extends Component {
     super(props);
     this.state = {
       rogueMap: rogueMap,
-      brush: '@',
+      symbol: '@',
       fcolor: '#FF0000',
       bgcolor: '#000000'
     }
@@ -94,7 +97,7 @@ class App extends Component {
       if (prevXPos !== xPos || prevYPos !== yPos) {
         this.setState({
           rogueMap: editCell(xPos, yPos, R.compose(
-            R.assoc('symbol', this.state.brush),
+            R.assoc('symbol', this.state.symbol),
             R.assoc('fcolor', this.state.fcolor),
             R.assoc('bgcolor',this.state.bgcolor)
           ))(this.state.rogueMap)
@@ -113,10 +116,10 @@ class App extends Component {
     window.addEventListener('mousemove', mouseMoveHandler);
   };
 
-  changeBrush (brush) {
-    console.log(brush);
+  changeSymbol (symbol) {
+    console.log(symbol);
     this.setState({
-      brush: brush
+      symbol: symbol
     })
   }
 
@@ -125,54 +128,27 @@ class App extends Component {
     this.setState(R.assoc(key, color, {}));
   }
 
+  setBrush (brush) {
+    this.setState({ symbol: brush.symbol, fcolor: brush.fcolor, bgcolor: brush.bgcolor })
+  }
+
   render () {
     return (
       <div className="ui">
         <div className="l-panel">
-          <ul className="colors-panel">
-            <li><input className="color-picker" type="color" value={this.state.fcolor} onChange={(event) => this.changeColor(event.target.value, 'fcolor')}/></li>
-            <li><input className="color-picker" type="color" value={this.state.bgcolor} onChange={(event) => this.changeColor(event.target.value, 'bgcolor')}/></li>
-          </ul>
-          <ul className="brushes-panel">{
-            brushes.map(val =>
-              <li key={val} className="brushes-panel__entry">
-                <button className="brush-btn" onClick={() => this.changeBrush(val)}>{val}</button>
-              </li>)
-            }
-          </ul>
+          <ColorsPanel
+            fColor={this.state.fcolor}
+            bgColor={this.state.bgColor}
+            changeFColorHandler={(event) => this.changeColor(event.target.value, 'fcolor')}
+            changeBGColorHandler={(event) => this.changeColor(event.target.value, 'bgcolor')}
+          />
+          <BrushesPanel brushes={brushes} clickHandler={this.changeSymbol} />
         </div>
         <div className="c-panel">
-          <div
-          className="canvas"
-          style={{ display: 'inline-block' }}
-          onMouseDown={this.mouseDownHandler}>
-            <svg viewBox={`0 0 ${exampleW} ${exampleH}`} width="40em" height="40em" style={{ overflow: 'visible' }}>
-              {
-                R.compose(
-                  R.map(cell =>
-                    <g key={`${cell.x}x${cell.y}`}>
-                      <rect x={cell.x} y={cell.y} width="1" height="1" style={{ fill: cell.bgcolor, stroke: 'grey', strokeWidth: 0.01 }}/>
-                      <text style={{ fontSize: `${fontSize}%`, fill: cell.fcolor, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
-                    </g>
-                  ),
-                  R.unnest
-                )(this.state.rogueMap)
-              }
-            </svg>
-          </div>
+          <Canvas mouseDownHandler={this.mouseDownHandler} grid={this.state.rogueMap}/>
         </div>
         <div className="r-panel">
-          <ul className="swatches-panel">
-            {
-              swatches(R.unnest(this.state.rogueMap)).map(cell =>
-                <li className="swatches-panel__entry" key={`${cell.symbol} ${cell.bgcolor} ${cell.fcolor}`}className="brushes-panel__entry">
-                  <button onClick={() => this.setState({ brush: cell.symbol, fcolor: cell.fcolor, bgcolor: cell.bgcolor })} style={{ backgroundColor: cell.bgcolor, color: cell.fcolor }} className="brush-btn">
-                    {cell.symbol}
-                  </button>
-                </li>
-              )
-            }
-          </ul>
+          <SwatchesPanel swatches={swatches(R.unnest(this.state.rogueMap))} clickHandler={this.setBrush}/>
       </div>
       </div>
     );
