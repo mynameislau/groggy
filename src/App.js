@@ -10,8 +10,8 @@ const trace = x => {
   return x;
 };
 
-const exampleW = 40;
-const exampleH = 40;
+const exampleW = 32;
+const exampleH = 32;
 
 const setCoords = R.compose(
   R.last,
@@ -25,7 +25,7 @@ const setCoords = R.compose(
 
 const rogueMap = setCoords(R.times(
   () => R.times(
-    () => ({ symbol: ' ', color: 'red' })
+    () => ({ symbol: ' ', fcolor: 'red', bgcolor: 'black' })
   , exampleW)
 , exampleH));
 
@@ -60,12 +60,15 @@ class App extends Component {
     this.state = {
       rogueMap: rogueMap,
       brush: '@',
-      fcolor: 'green',
-      bgcolor: 'red'
+      fcolor: '#FF0000',
+      bgcolor: '#000000'
     }
   }
 
   mouseDownHandler = downEvent => {
+
+    let prevXPos = null;
+    let prevYPos = null;
 
     const editor = downEvent.currentTarget;
 
@@ -79,9 +82,20 @@ class App extends Component {
 
       const xPos = Math.floor((x - l) / w * exampleW);
       const yPos = Math.floor((y - t) / h * exampleH);
-      this.setState({
-        rogueMap: editCell(xPos, yPos, R.assoc('symbol', this.state.brush))(this.state.rogueMap)
-      });
+
+      if (prevXPos !== xPos || prevYPos !== yPos) {
+        console.log('oui');
+        this.setState({
+          rogueMap: editCell(xPos, yPos, R.compose(
+            R.assoc('symbol', this.state.brush),
+            R.assoc('fcolor', this.state.fcolor),
+            R.assoc('bgcolor',this.state.bgcolor)
+          ))(this.state.rogueMap)
+        });
+
+        prevXPos = xPos;
+        prevYPos = yPos;
+      }
     };
 
     const mouseUpHandler = upEvent => {
@@ -92,9 +106,31 @@ class App extends Component {
     window.addEventListener('mousemove', mouseMoveHandler);
   };
 
+  changeBrush (brush) {
+    console.log(brush);
+    this.setState({
+      brush: brush
+    })
+  }
+
+  changeColor (color, key) {
+    console.log(color, key);
+    this.setState(R.assoc(key, color, {}));
+  }
+
   render () {
+    console.log(this.state.fcolor);
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <ul>
+          <li><input className="colorPicker" type="color" value={this.state.fcolor} onInput={(event) => this.changeColor(event.target.value, 'fcolor')}/></li>
+          <li><input className="colorPicker" type="color" value={this.state.bgcolor} onInput={(event) => this.changeColor(event.target.value, 'bgcolor')}/></li>
+        </ul>
+        <ul className="brushes">{
+            brushes.map(val =>
+              <li><button onClick={() => this.changeBrush(val)}>{val}</button></li>)
+          }
+        </ul>
         <div
         className="canvas"
         style={{ display: 'inline-block' }}
@@ -104,8 +140,8 @@ class App extends Component {
               R.compose(
                 R.map(cell =>
                   <g>
-                    <rect x={cell.x} y={cell.y} width="1" height="1" style={{ stroke: 'grey', strokeWidth: 0.01 }}/>
-                    <text style={{ fontSize: `${fontSize}%`, fill: cell.color, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
+                    <rect x={cell.x} y={cell.y} width="1" height="1" style={{ fill: cell.bgcolor, stroke: 'grey', strokeWidth: 0.01 }}/>
+                    <text style={{ fontSize: `${fontSize}%`, fill: cell.fcolor, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
                   </g>
                 ),
                 R.unnest
