@@ -1,26 +1,100 @@
-.App {
+.ui {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.r-panel,
+.l-panel {
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 8vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.c-panel {
+  flex-grow: 1;
   text-align: center;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+.colors-panel {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-shrink: 0;
 }
 
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
+.brushes-panel {
+  padding: 0;
+  width: 8vw;
+  list-style: none;
+  margin: 0;
+  flex-grow: 1;
+  flex-shrink: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  overflow: hidden;
 }
 
-.App-intro {
-  font-size: large;
+.color-picker {
+  border: 0;
+  background: 0;
+  width: 3em;
+  height: 3em;
+  display: inline-block;
+  padding: 0;
+  margin: 0;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.brushes-panel__entry {
+  width: 4vw;
+  height: 4vw;
+}
+
+.brush-btn {
+  width: 100%;
+  height: 100%;
+  background-color: #CCC;
+  color: #333;
+  border: 1px solid #BBB;
+  font-size: 1.3em;
+  line-height: 1.3em;
+  vertical-align: top;
+  padding: 0;
+  border-top: 0;
+}
+
+.swatches-panel {
+  flex-grow: 1;
+  list-style-type: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding: 0;
+  margin: 0;
+  width: 8vw;
+  background-color: #CCC;
+}
+
+.swatches-panel__entry {
+  width: 4vw;
+}
+
+.brushes-panel__entry + .brushes-panel__entry .brush-btn {
+  border-left: 0;
+}
+
+.canvas {
+  flex-grow: 1;
+  flex-shrink: 1;
+  display: flex;
+  justify-content: center;
 }
 
 .canvas {

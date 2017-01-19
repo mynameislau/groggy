@@ -13,6 +13,10 @@ const trace = x => {
 const exampleW = 32;
 const exampleH = 32;
 
+const brushes = '▩≋◸≉"@ ./+-#&ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
+
+const fontSize = 5;
+
 const setCoords = R.compose(
   R.last,
   R.mapAccum((rowAcc, rowVal) => [
@@ -28,10 +32,6 @@ const rogueMap = setCoords(R.times(
     () => ({ symbol: ' ', fcolor: 'red', bgcolor: 'black' })
   , exampleW)
 , exampleH));
-
-const brushes = [' ', '@', '*'];
-
-const fontSize = 5;
 
 const offsetAncestry = element =>
   element.offsetParent ?
@@ -53,6 +53,14 @@ const editCell = (x, y, fn) =>
         fn,
       x),
     y);
+
+const sameColorsAndSymbol = R.curry((a, b) =>
+  a.symbol === b.symbol && a.fcolor === b.fcolor && a.bgcolor === b.bgcolor
+);
+
+const swatches = R.reduce((acc, val) =>
+  R.find(sameColorsAndSymbol(val), acc) ?  acc : R.append(val, acc)
+  , []);
 
 class App extends Component {
   constructor(props) {
@@ -84,7 +92,6 @@ class App extends Component {
       const yPos = Math.floor((y - t) / h * exampleH);
 
       if (prevXPos !== xPos || prevYPos !== yPos) {
-        console.log('oui');
         this.setState({
           rogueMap: editCell(xPos, yPos, R.compose(
             R.assoc('symbol', this.state.brush),
@@ -119,36 +126,54 @@ class App extends Component {
   }
 
   render () {
-    console.log(this.state.fcolor);
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <ul>
-          <li><input className="colorPicker" type="color" value={this.state.fcolor} onInput={(event) => this.changeColor(event.target.value, 'fcolor')}/></li>
-          <li><input className="colorPicker" type="color" value={this.state.bgcolor} onInput={(event) => this.changeColor(event.target.value, 'bgcolor')}/></li>
-        </ul>
-        <ul className="brushes">{
+      <div className="ui">
+        <div className="l-panel">
+          <ul className="colors-panel">
+            <li><input className="color-picker" type="color" value={this.state.fcolor} onChange={(event) => this.changeColor(event.target.value, 'fcolor')}/></li>
+            <li><input className="color-picker" type="color" value={this.state.bgcolor} onChange={(event) => this.changeColor(event.target.value, 'bgcolor')}/></li>
+          </ul>
+          <ul className="brushes-panel">{
             brushes.map(val =>
-              <li><button onClick={() => this.changeBrush(val)}>{val}</button></li>)
-          }
-        </ul>
-        <div
-        className="canvas"
-        style={{ display: 'inline-block' }}
-        onMouseDown={this.mouseDownHandler}>
-          <svg viewBox={`0 0 ${exampleW} ${exampleH}`} width="40em" height="40em" style={{ overflow: 'visible' }}>
-            {
-              R.compose(
-                R.map(cell =>
-                  <g>
-                    <rect x={cell.x} y={cell.y} width="1" height="1" style={{ fill: cell.bgcolor, stroke: 'grey', strokeWidth: 0.01 }}/>
-                    <text style={{ fontSize: `${fontSize}%`, fill: cell.fcolor, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
-                  </g>
-                ),
-                R.unnest
-              )(this.state.rogueMap)
+              <li key={val} className="brushes-panel__entry">
+                <button className="brush-btn" onClick={() => this.changeBrush(val)}>{val}</button>
+              </li>)
             }
-          </svg>
+          </ul>
         </div>
+        <div className="c-panel">
+          <div
+          className="canvas"
+          style={{ display: 'inline-block' }}
+          onMouseDown={this.mouseDownHandler}>
+            <svg viewBox={`0 0 ${exampleW} ${exampleH}`} width="40em" height="40em" style={{ overflow: 'visible' }}>
+              {
+                R.compose(
+                  R.map(cell =>
+                    <g key={`${cell.x}x${cell.y}`}>
+                      <rect x={cell.x} y={cell.y} width="1" height="1" style={{ fill: cell.bgcolor, stroke: 'grey', strokeWidth: 0.01 }}/>
+                      <text style={{ fontSize: `${fontSize}%`, fill: cell.fcolor, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
+                    </g>
+                  ),
+                  R.unnest
+                )(this.state.rogueMap)
+              }
+            </svg>
+          </div>
+        </div>
+        <div className="r-panel">
+          <ul className="swatches-panel">
+            {
+              swatches(R.unnest(this.state.rogueMap)).map(cell =>
+                <li className="swatches-panel__entry" key={`${cell.symbol} ${cell.bgcolor} ${cell.fcolor}`}className="brushes-panel__entry">
+                  <button onClick={() => this.setState({ brush: cell.symbol, fcolor: cell.fcolor, bgcolor: cell.bgcolor })} style={{ backgroundColor: cell.bgcolor, color: cell.fcolor }} className="brush-btn">
+                    {cell.symbol}
+                  </button>
+                </li>
+              )
+            }
+          </ul>
+      </div>
       </div>
     );
   }
