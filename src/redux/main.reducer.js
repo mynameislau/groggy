@@ -36,13 +36,13 @@ const setCoords = R.compose(
 
 const rogueMap = setCoords(R.times(
   () => R.times(
-    () => ({ symbol: ' ', fcolor: 'red', bgcolor: 'black' })
+    () => ({ symbol: ' ', fColor: 'red', bgColor: 'black' })
   , exampleW)
 , exampleH));
 
 
 const sameColorsAndSymbol = R.curry((a, b) =>
-  a.symbol === b.symbol && a.fcolor === b.fcolor && a.bgcolor === b.bgcolor
+  a.symbol === b.symbol && a.fColor === b.fColor && a.bgColor === b.bgColor
 );
 
 const gridSwatches = R.compose(
@@ -70,8 +70,8 @@ const applyToCell = (x, y, fn) =>
 
 const setGraphicProps = state => R.compose(
   R.assoc('symbol', state.symbol),
-  R.assoc('fcolor', state.fColor),
-  R.assoc('bgcolor',state.bgColor)
+  R.assoc('fColor', state.fColor),
+  R.assoc('bgColor',state.bgColor)
 );
 
 export default (prevState = initialState, action) => {
@@ -86,6 +86,7 @@ export default (prevState = initialState, action) => {
       return R.assoc('brush', payload, prevState);
 
     case SET_BRUSH_COLOR:
+    console.log(payload.colorType, payload.color)
       return R.assoc(payload.colorType, payload.color, prevState);
 
     case SET_BRUSH_SYMBOL:

@@ -15,8 +15,8 @@ export default ({ grid, mouseDownHandler }) => {
         R.compose(
           R.map(cell =>
             <g key={`${cell.x}x${cell.y}`}>
-              <rect x={cell.x} y={cell.y} width="1" height="1" style={{ fill: cell.bgcolor, stroke: 'grey', strokeWidth: 0.01 }}/>
-              <text style={{ fontSize: `${fontSize}%`, fill: cell.fcolor, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
+              <rect x={cell.x} y={cell.y} width="1" height="1" style={{ fill: cell.bgColor, stroke: 'grey', strokeWidth: 0.01 }}/>
+              <text style={{ fontSize: `${fontSize}%`, fill: cell.fColor, fontFamily: 'Hack, monospace' }} x={cell.x + 0.5 - fontSize / 10 / 2} y={cell.y + 0.45 + fontSize / 10 / 2}>{cell.symbol}</text>
             </g>
           ),
           R.unnest

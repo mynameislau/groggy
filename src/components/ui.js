@@ -59,15 +59,14 @@ const mapStateToProps = (state) => ({
   swatches: state.main.swatches
 });
 
-const render = (props) => {
-const mouseDownHandler = downEvent => {
+const mouseDownHandler = R.curry((maxWidth, maxHeight, paint, downEvent) => {
 
   let prevXPos = null;
   let prevYPos = null;
 
   const editor = downEvent.currentTarget;
 
-  const mouseMoveHandler = moveEvent => {
+  const mouseMoveHandler = (moveEvent) => {
     const l = cumulativeOffset(offsetLeft)(editor);
     const t = cumulativeOffset(offsetTop)(editor);
     const w = editor.offsetWidth;
@@ -75,16 +74,16 @@ const mouseDownHandler = downEvent => {
     const x = moveEvent.clientX;
     const y = moveEvent.clientY;
 
-    const xPos = Math.floor((x - l) / w * props.grid.length);
-    const yPos = Math.floor((y - t) / h * props.grid[0].length);
+    const xPos = Math.floor((x - l) / w * maxWidth);
+    const yPos = Math.floor((y - t) / h * maxHeight);
 
     if (prevXPos !== xPos || prevYPos !== yPos) {
-      props.paint(xPos, yPos);
+      paint(xPos, yPos);
 
       prevXPos = xPos;
       prevYPos = yPos;
     }
-  };
+};
 
   const mouseUpHandler = upEvent => {
     window.removeEventListener('mousemove', mouseMoveHandler);
@@ -92,20 +91,22 @@ const mouseDownHandler = downEvent => {
 
   window.addEventListener('mouseup', mouseUpHandler);
   window.addEventListener('mousemove', mouseMoveHandler);
-};
+});
+
+const render = (props) => {
 
 return <div className="ui">
   <div className="l-panel">
     <ColorsPanel
       fColor={ props.fColor }
       bgColor={ props.bgColor }
-      changeFColorHandler={(event) => props.changeColor(event.target.value, 'fcolor')}
-      changeBGColorHandler={(event) => props.changeColor(event.target.value, 'bgcolor')}
+      changeFColorHandler={(event) => props.changeColor(event.target.value, 'fColor')}
+      changeBGColorHandler={(event) => props.changeColor(event.target.value, 'bgColor')}
       />
-    <BrushesPanel brushes={props.brushes} clickHandler={props.changeSymbol} />
+    <BrushesPanel fColor={props.fColor} bgColor={props.bgColor} brushes={props.brushes} clickHandler={props.changeSymbol} />
   </div>
   <div className="c-panel">
-    <Canvas mouseDownHandler={mouseDownHandler} grid={ props.grid }/>
+    <Canvas mouseDownHandler={mouseDownHandler(props.grid[0].length, props.grid.length, props.paint)} grid={ props.grid }/>
   </div>
   <div className="r-panel">
     <SwatchesPanel swatches={props.swatches} clickHandler={props.changeBrushH}/>
