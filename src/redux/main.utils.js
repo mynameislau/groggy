@@ -15,6 +15,21 @@ const setCoords = R.compose(
 
 export const defaultMap = setCoords(R.times(
   () => R.times(
-    () => ({ symbol: ' ', fColor: 'red', bgColor: 'black' })
+    () => ({ symbol: ' ', fColor: '#FF0000', bgColor: '#000000' })
     , exampleW)
     , exampleH));
+
+export const importDngnMap = R.compose(
+  setCoords,
+  R.map(
+    R.map(val => ({ bgColor: val.b, fColor: val.f, symbol: val.s }))
+  ),
+  JSON.parse
+)
+
+export const exportDngnMap = R.compose(
+  JSON.stringify,
+  R.map(
+    R.map(val => ({ b: val.bgColor, f: val.fColor, s: val.symbol }))
+  )
+);

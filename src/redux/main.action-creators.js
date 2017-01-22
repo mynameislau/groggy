@@ -23,6 +23,11 @@ export const changeBrush = brush => ({
   payload: brush
 });
 
+export const setModal = modal => ({
+  type: actions.SET_MODAL,
+  payload: modal
+});
+
 export const changeTool = tool => ({
   type: actions.CHANGE_TOOL,
   payload: tool

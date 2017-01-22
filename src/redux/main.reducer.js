@@ -2,7 +2,7 @@ import R from 'ramda';
 
 import * as actions from './main.actions';
 
-const brushes = '▩≋◸≉"@ ./+-#&ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
+const symbols = '▩≋◸≉"@ ./+-#&ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
 
 const trace = x => {
   console.log(x);
@@ -26,11 +26,12 @@ const initialState = {
   gridW: 0,
   gridH: 0,
   symbol: '@',
-  brushes: brushes,
+  symbols: symbols,
   fColor: '#FF0000',
   bgColor: '#000000',
   swatches: [],
-  tool: 'pen'
+  tool: 'pen',
+  modal: ''
 };
 
 const applyToCell = ([x, y], fn) =>
@@ -73,6 +74,9 @@ export default (prevState = initialState, action) => {
 
     case actions.CHANGE_SYMBOL:
       return R.assoc('symbol', payload, prevState);
+
+    case actions.SET_MODAL:
+      return R.assoc('modal', payload, prevState);
 
     case actions.PAINT:
       return R.compose(

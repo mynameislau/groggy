@@ -89,12 +89,18 @@ html {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  overflow: hidden;
+  overflow: scroll;
 }
 
 .brushes-panel__entry {
   width: 4vw;
   height: 4vw;
+  position: relative;
+  z-index: 0;
+}
+
+.brushes-panel__entry.brushes-panel__entry--active {
+  z-index: 1;
 }
 
 .brush-btn {
@@ -109,6 +115,10 @@ html {
   padding: 0;
   border-top: 0;
   transition: color 0.5s, background-color 0.5s;
+}
+
+.brush-btn[aria-selected="true"] {
+  box-shadow: inset 0 0 0 0.1em blue;
 }
 
 .swatches-panel {
@@ -151,4 +161,29 @@ html {
   cursor: crosshair;
   display: inline-flex;
   flex-grow: 0;
+}
+
+.tools-panel__btn {
+  padding: 1em;
+  border: 0;
+  background-color: #CCC;
+}
+
+.tools-panel__btn[aria-selected="true"] {
+  background-color: blue;
+}
+
+.modal {
+  position: absolute;
+  top: 25vh;
+  left: 25vw;
+  width: 50vw;
+  height: 50vh;
+  z-index: 1;
+  background-color: white;
+}
+
+.modal code {
+  overflow: scroll;
+  height: 100%;
 }

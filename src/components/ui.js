@@ -7,10 +7,15 @@ import Canvas from './canvas';
 import SwatchesPanel from './swatches-panel';
 import BrushesPanel from './brushes-panel';
 import ColorsPanel from './colors-panel';
+import ToolsPanel from './tools-panel';
+import FunctionsPanel from './functions-panel';
+import Modal from './modal';
 
 import * as actionsCreators from '../redux/main.action-creators';
 
 import { flood } from '../graph/cartesian-grid';
+
+import { exportDngnMap, defaultMap } from '../redux/main.utils';
 
 const offsetAncestry = element =>
   element.offsetParent ?
@@ -46,7 +51,7 @@ const getMousePosition = (mouseEvent, element, maxW, maxH) => {
 // const B = window.performance.now();
 // console.log('done', B - A, floody);
 
-const render = ({ tool, grid, gridW, gridH, fColor, bgColor, brushes, swatches, actions}) => {
+const render = ({ modal, symbol, tool, grid, gridW, gridH, fColor, bgColor, symbols, swatches, actions}) => {
 
   const bucketHandler = clickEvent => {
     const pos = getMousePosition(clickEvent, clickEvent.currentTarget, gridW, gridH);
@@ -102,6 +107,7 @@ const render = ({ tool, grid, gridW, gridH, fColor, bgColor, brushes, swatches, 
   };
 
   return <div className="ui">
+    <Modal message={modal} />
     <div className="l-panel">
       <ColorsPanel
       fColor={fColor}
@@ -109,12 +115,16 @@ const render = ({ tool, grid, gridW, gridH, fColor, bgColor, brushes, swatches, 
       changeFColorHandler={(event) => actions.changeColor(event.target.value, 'fColor')}
       changeBGColorHandler={(event) => actions.changeColor(event.target.value, 'bgColor')}
       />
-      <BrushesPanel fColor={fColor} bgColor={bgColor} brushes={brushes} clickHandler={actions.changeSymbol} />
+    <BrushesPanel fColor={fColor} bgColor={bgColor} symbol={symbol} symbols={symbols} clickHandler={actions.changeSymbol} />
     </div>
     <div className="c-panel">
       <div className="t-panel">
-        <button onClick={() => actions.changeTool('pen')} className="tool-btn">Pen</button>
-        <button onClick={() => actions.changeTool('flood')} className="tool-btn">Bucket</button>
+        <FunctionsPanel
+        exportHandler={() => actions.setModal(exportDngnMap(grid))}
+        stashHandler={() => localStorage.setItem('dngnmap', exportDngnMap(grid))}
+        clearHandler={() => actions.createGrid(defaultMap)}
+        />
+        <ToolsPanel currentTool={tool} toolSelectHandler={actions.changeTool}/>
       </div>
       <div className="m-panel">
         <Canvas mouseDownHandler={tool === 'pen' ? mouseDownHandler : bucketHandler} grid={grid}/>
