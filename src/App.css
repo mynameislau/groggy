@@ -1,24 +1,49 @@
+html {
+  box-sizing: border-box;
+}
+
+*, *::after, *::before {
+  box-sizing: inherit;
+}
+
 .ui {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: row;
   height: 100vh;
 }
+
+.c-panel {
+  flex-grow: 1;
+  flex-direction: column;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+.m-panel {
+  display: flex;
+  flex-grow: 1;
+  flex-shrink: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.t-panel {
+  flex-shrink: 0;
+  justify-content: center;
+  display: flex;
+}
+
 
 .r-panel,
 .l-panel {
   flex-grow: 0;
   flex-shrink: 0;
+  overflow: hidden;
   width: 8vw;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-}
-
-.c-panel {
-  flex-grow: 1;
-  text-align: center;
 }
 
 .colors-panel {
@@ -30,14 +55,28 @@
   background-color: #CCC;
 }
 
+.colors-panel__entry {
+
+}
+
 .color-picker {
   border: 0;
   background: 0;
   width: 4vw;
   height: 4vw;
-  display: inline-block;
-  padding: 0;
+  display: block;
+  padding: 0.2em;
   margin: 0;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border: 0;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: 0;
+  border-radius: 50%;
 }
 
 .brushes-panel {
@@ -69,6 +108,7 @@
   vertical-align: top;
   padding: 0;
   border-top: 0;
+  transition: color 0.5s, background-color 0.5s;
 }
 
 .swatches-panel {
@@ -109,4 +149,6 @@
   -o-user-select: none;
   user-select: none;
   cursor: crosshair;
+  display: inline-flex;
+  flex-grow: 0;
 }

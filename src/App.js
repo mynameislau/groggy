@@ -1,8 +1,5 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import React from 'react';
 import './App.css';
-import R from 'ramda';
-import { IO } from 'ramda-fantasy';
 
 import UI from './components/ui';
 
@@ -10,18 +7,16 @@ import { createStore, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
 
 import mainReducer from './redux/main.reducer';
+import { defaultMap } from './redux/main.utils';
+import { createGrid } from './redux/main.action-creators';
 
 const store = createStore(combineReducers({
   main: mainReducer
 }));
 
-let mainState = mainReducer(undefined, {});
-store.subscribe(state => {
-  mainState = store.getState().main;
-});
+store.dispatch(createGrid(defaultMap));
 
-export default () => mainState ?
-<Provider store={store}>
-  <UI />
-</Provider>
-: null;
+export default () =>
+  <Provider store={store}>
+    <UI />
+  </Provider>;

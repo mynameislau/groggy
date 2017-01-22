@@ -1,17 +1,6 @@
 import R from 'ramda';
-import {
-  CREATE_GRID,
-  SET_BRUSH_SYMBOL,
-  SET_BRUSH_COLOR,
-  CHANGE_BRUSH,
-  PAINT,
 
-  createGrid,
-  setBrushSymbol,
-  setBrushColor,
-  changeBrush,
-  paint
-} from './main.actions';
+import * as actions from './main.actions';
 
 const brushes = '▩≋◸≉"@ ./+-#&ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
 
@@ -20,26 +9,6 @@ const trace = x => {
 
   return x;
 };
-
-const exampleW = 32;
-const exampleH = 32;
-
-const setCoords = R.compose(
-  R.last,
-  R.mapAccum((rowAcc, rowVal) => [
-    rowAcc + 1,
-    R.mapAccum((colAcc, colVal) => [
-      colAcc + 1,
-      Object.assign({}, colVal, { x: colAcc, y: rowAcc })
-    ], 0, rowVal)[1]
-  ], 0));
-
-const rogueMap = setCoords(R.times(
-  () => R.times(
-    () => ({ symbol: ' ', fColor: 'red', bgColor: 'black' })
-  , exampleW)
-, exampleH));
-
 
 const sameColorsAndSymbol = R.curry((a, b) =>
   a.symbol === b.symbol && a.fColor === b.fColor && a.bgColor === b.bgColor
@@ -53,15 +22,18 @@ const gridSwatches = R.compose(
 );
 
 const initialState = {
-  grid: rogueMap,
+  grid: [[]],
+  gridW: 0,
+  gridH: 0,
   symbol: '@',
   brushes: brushes,
   fColor: '#FF0000',
   bgColor: '#000000',
-  swatches: []
+  swatches: [],
+  tool: 'pen'
 };
 
-const applyToCell = (x, y, fn) =>
+const applyToCell = ([x, y], fn) =>
   R.adjust(
     R.adjust(
         fn,
@@ -74,28 +46,41 @@ const setGraphicProps = state => R.compose(
   R.assoc('bgColor',state.bgColor)
 );
 
+const updateGrid = grid => R.compose(
+  (state) => R.assoc('swatches', gridSwatches(state.grid), state),
+  R.assoc('gridW', grid[0].length),
+  R.assoc('gridH', grid.length),
+  R.assoc('grid', grid)
+);
+
 export default (prevState = initialState, action) => {
   const payload = action.payload;
 
   switch (action.type) {
 
-    case CREATE_GRID:
-      return prevState;
+    case actions.CREATE_GRID:
+      return updateGrid(action.payload)(prevState);
 
-    case CHANGE_BRUSH:
+    case actions.CHANGE_TOOL:
+      return R.assoc('tool', payload, prevState);
+
+    case actions.CHANGE_BRUSH:
       return R.assoc('brush', payload, prevState);
 
-    case SET_BRUSH_COLOR:
-    console.log(payload.colorType, payload.color)
+    case actions.CHANGE_COLOR:
+      console.log(payload.colorType, payload.color)
       return R.assoc(payload.colorType, payload.color, prevState);
 
-    case SET_BRUSH_SYMBOL:
+    case actions.CHANGE_SYMBOL:
       return R.assoc('symbol', payload, prevState);
 
-    case PAINT:
+    case actions.PAINT:
       return R.compose(
         (state) => R.assoc('swatches', gridSwatches(state.grid), state),
-        (state) => R.assoc('grid', applyToCell(payload.x, payload.y, setGraphicProps(state))(state.grid), state)
+        (state) => R.assoc('grid', R.reduce((grid, coords) =>
+          applyToCell(coords, setGraphicProps(state))(grid)
+          , state.grid
+        , payload), state)
       )(prevState);
 
     default:

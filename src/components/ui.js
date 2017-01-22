@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
 import R from 'ramda';
 
 import Canvas from './canvas';
@@ -7,13 +8,9 @@ import SwatchesPanel from './swatches-panel';
 import BrushesPanel from './brushes-panel';
 import ColorsPanel from './colors-panel';
 
-import {
-  createGrid,
-  setBrushSymbol,
-  setBrushColor,
-  changeBrush,
-  paint
-} from '../redux/main.actions';
+import * as actionsCreators from '../redux/main.action-creators';
+
+import { flood } from '../graph/cartesian-grid';
 
 const offsetAncestry = element =>
   element.offsetParent ?
@@ -29,88 +26,109 @@ const cumulativeOffset = propFn => R.compose(
   offsetAncestry
 );
 
+const getMousePosition = (mouseEvent, element, maxW, maxH) => {
+  const l = cumulativeOffset(offsetLeft)(element);
+  const t = cumulativeOffset(offsetTop)(element);
+  const w = element.offsetWidth;
+  const h = element.offsetHeight;
+  const x = mouseEvent.clientX;
+  const y = mouseEvent.clientY;
 
-const mapDispatchToProps = (dispatch) => ({
+  const xPos = Math.floor((x - l) / w * maxW);
+  const yPos = Math.floor((y - t) / h * maxH);
 
-  changeSymbol: (symbol) => {
-    console.log(symbol, this);
-    dispatch(setBrushSymbol(symbol));
-  },
+  return [xPos, yPos];
+}
 
-  changeColor: (color, colorType) => {
-    console.log(color, colorType);
-    dispatch(setBrushColor(color, colorType));
-  },
+// const bla = R.times(() => R.times(() => 'u', 32), 32);
+// const A = window.performance.now();
+// const floody = flood(() => true, [10, 10], bla);
+// const B = window.performance.now();
+// console.log('done', B - A, floody);
 
-  changeBrushH: (brush) => {
-    dispatch(changeBrush(brush));
-  },
+const render = ({ tool, grid, gridW, gridH, fColor, bgColor, brushes, swatches, actions}) => {
 
-  paint: (xPos, yPos) => {
-    dispatch(paint(xPos, yPos));
+  const bucketHandler = clickEvent => {
+    const pos = getMousePosition(clickEvent, clickEvent.currentTarget, gridW, gridH);
+    const [x, y] = pos;
+    const flooded = flood(cell => cell.symbol === grid[y][x].symbol, pos, grid);
+    console.log(flooded);
+    const toCoordsArray = R.compose(
+      R.filter(val => !R.isNil(val)),
+      R.unnest,
+      R.last,
+      R.mapAccum(
+      (yAcc, tab) => [
+        yAcc + 1,
+        R.compose(
+          R.last,
+          R.mapAccum((xAcc, val) => [
+            xAcc + 1,
+            val ? [xAcc, yAcc] : null
+          ], 0)
+        )(tab)
+      ], 0)
+    );
+
+    actions.paint(toCoordsArray(flooded));
   }
-})
 
-const mapStateToProps = (state) => ({
-  grid: state.main.grid,
-  fColor: state.main.fColor,
-  bgColor: state.main.bgColor,
-  brushes: state.main.brushes,
-  swatches: state.main.swatches
-});
+  const mouseDownHandler = downEvent => {
 
-const mouseDownHandler = R.curry((maxWidth, maxHeight, paint, downEvent) => {
+    let prevXPos = null;
+    let prevYPos = null;
 
-  let prevXPos = null;
-  let prevYPos = null;
+    const editor = downEvent.currentTarget;
 
-  const editor = downEvent.currentTarget;
+    const mouseMoveHandler = (moveEvent) => {
+      const [xPos, yPos] = getMousePosition(moveEvent, editor, gridW, gridH);
 
-  const mouseMoveHandler = (moveEvent) => {
-    const l = cumulativeOffset(offsetLeft)(editor);
-    const t = cumulativeOffset(offsetTop)(editor);
-    const w = editor.offsetWidth;
-    const h = editor.offsetHeight;
-    const x = moveEvent.clientX;
-    const y = moveEvent.clientY;
+      if (prevXPos !== xPos || prevYPos !== yPos) {
+        actions.paint([
+          [xPos, yPos]
+        ]);
 
-    const xPos = Math.floor((x - l) / w * maxWidth);
-    const yPos = Math.floor((y - t) / h * maxHeight);
+        prevXPos = xPos;
+        prevYPos = yPos;
+      }
+    };
 
-    if (prevXPos !== xPos || prevYPos !== yPos) {
-      paint(xPos, yPos);
+    const mouseUpHandler = upEvent => {
+      window.removeEventListener('mousemove', mouseMoveHandler);
+    };
 
-      prevXPos = xPos;
-      prevYPos = yPos;
-    }
-};
-
-  const mouseUpHandler = upEvent => {
-    window.removeEventListener('mousemove', mouseMoveHandler);
+    window.addEventListener('mouseup', mouseUpHandler);
+    window.addEventListener('mousemove', mouseMoveHandler);
   };
 
-  window.addEventListener('mouseup', mouseUpHandler);
-  window.addEventListener('mousemove', mouseMoveHandler);
-});
-
-const render = (props) => {
-
-return <div className="ui">
-  <div className="l-panel">
-    <ColorsPanel
-      fColor={ props.fColor }
-      bgColor={ props.bgColor }
-      changeFColorHandler={(event) => props.changeColor(event.target.value, 'fColor')}
-      changeBGColorHandler={(event) => props.changeColor(event.target.value, 'bgColor')}
+  return <div className="ui">
+    <div className="l-panel">
+      <ColorsPanel
+      fColor={fColor}
+      bgColor={bgColor}
+      changeFColorHandler={(event) => actions.changeColor(event.target.value, 'fColor')}
+      changeBGColorHandler={(event) => actions.changeColor(event.target.value, 'bgColor')}
       />
-    <BrushesPanel fColor={props.fColor} bgColor={props.bgColor} brushes={props.brushes} clickHandler={props.changeSymbol} />
+      <BrushesPanel fColor={fColor} bgColor={bgColor} brushes={brushes} clickHandler={actions.changeSymbol} />
+    </div>
+    <div className="c-panel">
+      <div className="t-panel">
+        <button onClick={() => actions.changeTool('pen')} className="tool-btn">Pen</button>
+        <button onClick={() => actions.changeTool('flood')} className="tool-btn">Bucket</button>
+      </div>
+      <div className="m-panel">
+        <Canvas mouseDownHandler={tool === 'pen' ? mouseDownHandler : bucketHandler} grid={grid}/>
+      </div>
+      <div className="b-panel">
+      </div>
+    </div>
+    <div className="r-panel">
+      <SwatchesPanel swatches={swatches} clickHandler={actions.changeBrush}/>
+    </div>
   </div>
-  <div className="c-panel">
-    <Canvas mouseDownHandler={mouseDownHandler(props.grid[0].length, props.grid.length, props.paint)} grid={ props.grid }/>
-  </div>
-  <div className="r-panel">
-    <SwatchesPanel swatches={props.swatches} clickHandler={props.changeBrushH}/>
-  </div>
-</div>};
+};
 
+
+const mapDispatchToProps = (dispatch) => ({ actions: bindActionCreators(actionsCreators, dispatch) });
+const mapStateToProps = state => state.main;
 export default connect(mapStateToProps, mapDispatchToProps)(render);
