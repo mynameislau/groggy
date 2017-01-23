@@ -92,6 +92,10 @@ html {
   overflow: scroll;
 }
 
+.brushes-panel::-webkit-scrollbar {
+  display: none;
+}
+
 .brushes-panel__entry {
   width: 4vw;
   height: 4vw;
@@ -181,9 +185,8 @@ html {
   height: 50vh;
   z-index: 1;
   background-color: white;
+  overflow: scroll;
 }
 
 .modal code {
-  overflow: scroll;
-  height: 100%;
 }
